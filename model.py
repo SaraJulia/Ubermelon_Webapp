@@ -19,7 +19,10 @@ class Melon(object):
         return "<Melon: %s, %s, %s>"%(self.id, self.common_name, self.price_str())
 
 class Customer(object):
-    pass
+    def __init__ (self, givenname, email, password):
+        self.givenname = givenname
+        self.email = email
+        self.password = password
 
 def connect():
     conn = sqlite3.connect("melons.db")
@@ -73,4 +76,14 @@ def get_melon_by_id(id):
     return melon
 
 def get_customer_by_email(email):
-    pass
+    db = connect()
+    query = """SELECT givenname, password FROM customers WHERE email = ? ;"""
+    db.execute(query, (email,))
+
+    row = db.fetchone()
+
+    if not row: 
+      return None
+
+    customer = Customer(row[0], email, row[1])
+    return customer 
