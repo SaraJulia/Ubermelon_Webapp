@@ -62,25 +62,16 @@ def total_price():
 def create_melon_dict():
     melon_dict = {}
     
-    if "melon_dict" in session:
-        for id in session["cart"]:
-            if id not in melon_dict:
-                new_melon = model.get_melon_by_id(id)
-                melon_info = [new_melon.common_name, new_melon.price, 1, new_melon.price*1]
-                melon_dict[id] = melon_info
-            else:
-                melon_dict[id][2] += 1
-                melon_dict[id][3] += melon_dict[id][3] + melon_dict[id][2]
-    else:
+    if "melon_dict" not in session:
         session["melon_dict"] = {}
-        for id in session["cart"]:
-            if id not in melon_dict:
-                new_melon = model.get_melon_by_id(id)
-                melon_info = [new_melon.common_name, new_melon.price, 1, new_melon.price*1]
-                melon_dict[id] = melon_info
-            else:
-                melon_dict[id][2] += 1
-                melon_dict[id][3] += melon_dict[id][3] + melon_dict[id][2]
+    for id in session["cart"]:
+        if id not in melon_dict:
+            new_melon = model.get_melon_by_id(id)
+            melon_info = [new_melon.common_name, new_melon.price, 1, new_melon.price*1]
+            melon_dict[id] = melon_info
+        else:
+            melon_dict[id][2] += 1
+            melon_dict[id][3] = melon_dict[id][1] * melon_dict[id][2]
     
     session["melon_dict"] = melon_dict
 
@@ -99,7 +90,9 @@ def add_to_cart(id):
         session["cart"] = [id]
 
     flash("Successfully added to cart!")
-    return render_template("/cart.html", melon_dict = melon_dict)
+
+    # return render_template("/cart.html", melon_dict = melon_dict, total = total)
+    return redirect("/cart")
 
 @app.route("/login", methods=["GET"])
 def show_login():
