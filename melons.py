@@ -7,11 +7,11 @@ app = Flask(__name__)
 app.secret_key = '\xf5!\x07!qj\xa4\x08\xc6\xf8\n\x8a\x95m\xe2\x04g\xbb\x98|U\xa2f\x03'
 app.jinja_env.undefined = jinja2.StrictUndefined
 
-melon_dict = {}
-
 @app.route("/")
 def index():
     """This is the 'cover' page of the ubermelon site"""
+    session["customer"] = session.get("customer", None)
+    print session["customer"]
     return render_template("index.html")
 
 @app.route("/melons")
@@ -35,7 +35,7 @@ def shopping_cart():
     """TODO: Display the contents of the shopping cart. The shopping cart is a
     list held in the session that contains all the melons to be added. Check
     accompanying screenshots for details."""
-    print session["cart"]
+    # print session["cart"]
 
     create_melon_dict()
     melon_dict = session['melon_dict']
@@ -64,15 +64,16 @@ def create_melon_dict():
     
     if "melon_dict" not in session:
         session["melon_dict"] = {}
-    for id in session["cart"]:
-        if id not in melon_dict:
-            new_melon = model.get_melon_by_id(id)
-            melon_info = [new_melon.common_name, new_melon.price, 1, new_melon.price*1]
-            melon_dict[id] = melon_info
-        else:
-            melon_dict[id][2] += 1
-            melon_dict[id][3] = melon_dict[id][1] * melon_dict[id][2]
-    
+    cart_list = session.get("cart", [])
+    if cart_list is not None:
+        for id in cart_list:
+            if id not in melon_dict:
+                new_melon = model.get_melon_by_id(id)
+                melon_info = [new_melon.common_name, float(new_melon.price), 1, new_melon.price*1.00]
+                melon_dict[id] = melon_info
+            else:
+                melon_dict[id][2] += 1
+                melon_dict[id][3] = melon_dict[id][1] * melon_dict[id][2]
     session["melon_dict"] = melon_dict
 
 @app.route("/add_to_cart/<int:id>")
@@ -103,16 +104,32 @@ def show_login():
 def process_login():
     """TODO: Receive the user's login credentials located in the 'request.form'
     dictionary, look up the user, and store them in the session."""
-    email = request.form.get("email")
-    password = request.form.get("password")
-    customer = model.get_customer_by_email(email)
-    if customer is None:
-        flash("You don't exist!")
+    if session.get("customer", None) is not None:
+        flash("Log out before logging in again!")
         return redirect("/login")
-    if password == customer.password:
-        flash("Welcome, %s!" % customer.givenname)
-        return redirect("/melons")
+    else:
+        email = request.form.get("email")
+        password = request.form.get("password")
+        customer = model.get_customer_by_email(email)
+        if customer is None:
+            flash("You don't exist!")
+            return redirect("/login")
+        if password == customer.password: #successful login case
+            flash("Welcome, %s!" % customer.givenname)
+            session["customer"] = (customer.givenname, customer.email, customer.password)
+            session.get("logged_in", True)
+            return redirect("/melons")
+        else:
+            flash("Incorrect email or password.")
+            return redirect("/login")
 
+@app.route("/logout")
+def logout():
+    for key in session.keys():
+        del session[key]
+    session["customer"] = session.get("customer", None)
+    flash("You have logged out!")
+    return redirect("/login")
 
 @app.route("/checkout")
 def checkout():
