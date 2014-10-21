@@ -41,9 +41,9 @@ def shopping_cart():
     melon_dict = session['melon_dict']
     total = total_price()
 
-    print "Melon dict is:", melon_dict
+    # print "Melon dict is:", melon_dict
 
-    print "Melon dict is now (line 49):", melon_dict
+    # print "Melon dict is now (line 49):", melon_dict
 
     return render_template("cart.html", melon_dict = melon_dict, total = total)
 
@@ -89,10 +89,7 @@ def add_to_cart(id):
        session["cart"].append(id)
     else:
         session["cart"] = [id]
-
     flash("Successfully added to cart!")
-
-    # return render_template("/cart.html", melon_dict = melon_dict, total = total)
     return redirect("/cart")
 
 @app.route("/login", methods=["GET"])
@@ -117,7 +114,6 @@ def process_login():
         if password == customer.password: #successful login case
             flash("Welcome, %s!" % customer.givenname)
             session["customer"] = (customer.givenname, customer.email, customer.password)
-            session.get("logged_in", True)
             return redirect("/melons")
         else:
             flash("Incorrect email or password.")
@@ -125,9 +121,11 @@ def process_login():
 
 @app.route("/logout")
 def logout():
-    for key in session.keys():
-        del session[key]
-    session["customer"] = session.get("customer", None)
+    # for key in session.keys():
+    #     del session[key]
+    session.clear()
+    # session["customer"] = session.get("customer", None)
+    session["customer"] = None
     flash("You have logged out!")
     return redirect("/login")
 
